@@ -37,6 +37,16 @@ async function submitEmail() {
             document.getElementById('email-section').style.display = 'none';
             document.getElementById('camera-section').style.display = 'block';
             
+            const video = document.getElementById('video-feed');
+            if (video) {
+            const feedUrl = video.getAttribute('data-src');
+
+            // ✅ always set src after switching sections
+            video.setAttribute('src', feedUrl);
+
+            // ✅ optional: avoid browser caching weirdness
+            // video.setAttribute('src', feedUrl + "?t=" + Date.now());
+            }
             // Start polling for status updates
             startStatusPolling();
             
@@ -231,11 +241,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const emailInput = document.getElementById('email-input');
     
     if (emailInput) {
-        emailInput.addEventListener('keypress', (e) => {
+        emailInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                submitEmail();
+              e.preventDefault();   // ✅ يمنع أي submit/reload
+              submitEmail();
             }
-        });
+          });
     }
     
     console.log('[OK] BracketClick Photo Booth loaded');

@@ -19,6 +19,28 @@ import threading
 import datetime
 from flask import Flask, render_template, Response, request, jsonify
 
+import urllib.request
+
+MODEL_URL = "https://github.com/ProgAm1/Bracketclick/releases/download/v1.0.0/hand_landmarker.task"
+
+def ensure_model():
+    model_path = config.MODEL_PATH
+
+    if os.path.exists(model_path):
+        return model_path
+
+    print("[INFO] Model not found. Downloading...")
+
+    os.makedirs(os.path.dirname(model_path), exist_ok=True)
+
+    urllib.request.urlretrieve(MODEL_URL, model_path)
+
+    print("[OK] Model downloaded")
+
+    return model_path
+
+
+
 
 def is_valid_email(email):
     """Validate email format (basic RFC 5322-style)."""
@@ -63,25 +85,27 @@ state_lock = threading.Lock()
 
 # Initialize Hand Analyzer with detailed error checking
 analyzer = None
+
 try:
-    print(
-        f"\n[INFO] Looking for model at: {os.path.abspath(config.MODEL_PATH)}")
+    print(f"\n[INFO] Looking for model at: {os.path.abspath(config.MODEL_PATH)}")
     print(f"[INFO] Model exists: {os.path.exists(config.MODEL_PATH)}")
 
-    if os.path.exists(config.MODEL_PATH):
-        analyzer = HandAnalyzer(config.MODEL_PATH)
-        print("[OK] HandAnalyzer initialized successfully!\n")
-    else:
-        error_msg = f"Model file not found: {config.MODEL_PATH}"
-        print(f"[ERROR] {error_msg}")
-        with state_lock:
-            state['error'] = error_msg
+    # Ensure model exists (download if missing)
+    model_path = ensure_model()
+
+    print(f"\n[INFO] Using model at: {os.path.abspath(model_path)}")
+    print(f"[INFO] Model exists: {os.path.exists(model_path)}")
+
+    analyzer = HandAnalyzer(model_path)
+    print("[OK] HandAnalyzer initialized successfully!\n")
 
 except Exception as e:
     error_msg = f"Failed to load HandAnalyzer: {str(e)}"
     print(f"[ERROR] {error_msg}")
+
     import traceback
     traceback.print_exc()
+
     with state_lock:
         state['error'] = error_msg
 

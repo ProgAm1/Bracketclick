@@ -107,6 +107,10 @@ input[type="email"] {
     max-width: 350px;
     margin-bottom: 15px;
     transition: border-color 0.3s, box-shadow 0.3s;
+
+    /* ✅ FIX */
+    background: #3a3a3a;
+    color: #fff;
 }
 
 input[type="email"]:focus {
