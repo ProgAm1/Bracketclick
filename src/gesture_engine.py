@@ -10,9 +10,11 @@ import os
 
 from src import config
 
+
 class HandAnalyzer:
     def __init__(self, model_path):
-        print(f"[HandAnalyzer] Loading model from: {os.path.abspath(model_path)}")
+        print(
+            f"[HandAnalyzer] Loading model from: {os.path.abspath(model_path)}")
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"Model not found: {model_path}")
         try:
@@ -24,7 +26,8 @@ class HandAnalyzer:
                 min_hand_presence_confidence=0.3,
                 min_tracking_confidence=0.3
             )
-            self.landmarker = vision.HandLandmarker.create_from_options(options)
+            self.landmarker = vision.HandLandmarker.create_from_options(
+                options)
             print("[OK] MediaPipe HandLandmarker loaded successfully!")
         except Exception as e:
             print(f"[ERROR] Failed to load MediaPipe model: {e}")
@@ -33,7 +36,8 @@ class HandAnalyzer:
     def process(self, frame):
         try:
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
+            mp_image = mp.Image(
+                image_format=mp.ImageFormat.SRGB, data=rgb_frame)
             return self.landmarker.detect(mp_image)
         except Exception as e:
             print(f"[ERROR] Process failed: {e}")
@@ -50,12 +54,28 @@ class HandAnalyzer:
 
     def _calculate_angle(self, a, b, c):
         """Angle at b between ba and bc (degrees)."""
-        a, b, c = np.array(a), np.array(b), np.array(c)
-        ba, bc = a - b, c - b
-        norm_ba = ba / (np.linalg.norm(ba) + 1e-8)
-        norm_bc = bc / (np.linalg.norm(bc) + 1e-8)
-        dot = np.clip(np.dot(norm_ba, norm_bc), -1.0, 1.0)
-        return float(np.degrees(np.arccos(dot)))
+        a, b, c = np.array(a, dtype=np.float32), np.array(b, dtype=np.float32), np.array(c, dtype=np.float32)
+
+        ba = a - b
+        bc = c - b
+
+        norm_ba = np.linalg.norm(ba)
+        norm_bc = np.linalg.norm(bc)
+
+        # لو النقاط متطابقة/قريبة جدًا اعتبرها مستقيمة
+        if norm_ba < 1e-5 or norm_bc < 1e-5:
+            return 180.0
+
+        ba = ba / norm_ba
+        bc = bc / norm_bc
+
+        dot = np.clip(np.dot(ba, bc), -1.0, 1.0)
+        angle = np.degrees(np.arccos(dot))
+
+        if np.isnan(angle):
+            return 180.0
+
+        return float(angle)
 
     def get_finger_angle(self, landmarks):
         """Angle BETWEEN index and middle finger directions (PDF: bracket 30-60°).
@@ -74,40 +94,60 @@ class HandAnalyzer:
         return self.get_joint_angles(lms)
 
     def get_joint_angles(self, lms):
-        """Joint angles for index (5-6-7) and middle (9-10-11)."""
-        angles = {'idx': 0, 'mid': 0}
+        """
+        Joint angles (degrees) for fingers:
+        index: 5-6-7
+        middle: 9-10-11
+        ring: 13-14-15
+        pinky: 17-18-19
+        thumb: 2-3-4 (approx bend at 3)
+        """
+        angles = {'idx': 0, 'mid': 0, 'ring': 0, 'pinky': 0, 'thumb': 0}
         if len(lms) < 21:
             return angles
-        try:
-            angles['idx'] = self._calculate_angle(lms[5], lms[6], lms[7])
-        except Exception:
-            pass
-        try:
-            angles['mid'] = self._calculate_angle(lms[9], lms[10], lms[11])
-        except Exception:
-            pass
+
+        def safe(a, b, c, key):
+            try:
+                angles[key] = self._calculate_angle(lms[a], lms[b], lms[c])
+            except Exception:
+                pass
+
+        safe(5, 6, 7, 'idx')
+        safe(9, 10, 11, 'mid')
+        safe(13, 14, 15, 'ring')
+        safe(17, 18, 19, 'pinky')
+        safe(2, 3, 4, 'thumb')  # thumb bend
+
         return angles
 
     def get_finger_states(self, landmarks):
-        """Extended/curled state for each finger."""
+        """Extended/curled state for each finger (rotation-robust)."""
         if len(landmarks) < 21:
             return None
+
+        wrist = np.array(landmarks[0])
+
         fingers = {
-            'thumb': {'tip': 4, 'joint': 2, 'is_thumb': True},
-            'index': {'tip': 8, 'joint': 6, 'is_thumb': False},
+            'thumb':  {'tip': 4,  'joint': 2,  'is_thumb': True},
+            'index':  {'tip': 8,  'joint': 6,  'is_thumb': False},
             'middle': {'tip': 12, 'joint': 10, 'is_thumb': False},
-            'ring': {'tip': 16, 'joint': 14, 'is_thumb': False},
-            'pinky': {'tip': 20, 'joint': 18, 'is_thumb': False}
+            'ring':   {'tip': 16, 'joint': 14, 'is_thumb': False},
+            'pinky':  {'tip': 20, 'joint': 18, 'is_thumb': False},
         }
+
         states = {}
         for name, points in fingers.items():
-            tip_x, tip_y = landmarks[points['tip']][0], landmarks[points['tip']][1]
-            joint_x, joint_y = landmarks[points['joint']][0], landmarks[points['joint']][1]
+            tip = np.array(landmarks[points['tip']])
+            joint = np.array(landmarks[points['joint']])
+
             if points['is_thumb']:
-                is_extended = abs(tip_x - joint_x) > 30
+                # خله مثل ما هو عندك (بسيط)
+                states[name] = abs(tip[0] - joint[0]) > 30
             else:
-                is_extended = tip_y < joint_y
-            states[name] = is_extended
+                # ✅ الإصبع مرفوع إذا طرفه أبعد عن الرسغ من مفصله
+                states[name] = np.linalg.norm(
+                    tip - wrist) > np.linalg.norm(joint - wrist)
+
         return states
 
     def detect_bracket_gesture(self, landmarks, handedness):
@@ -115,21 +155,35 @@ class HandAnalyzer:
         Same logic as Phase 2. Returns (is_valid, bracket_angle, idx_angle, mid_angle, reason, tilt_angle, finger_states).
         Bracket angle = angle between finger vectors (30-60°). Index/middle straight >= 140°.
         """
-        if len(landmarks) < 13:
+        if len(landmarks) < 21:
             return False, 0, 0, 0, "Too few landmarks", 0, None
 
-        finger_states = self.get_finger_states(landmarks)
+         # ✅ لازم تحسبه هنا
         bracket_angle = self.get_finger_angle(landmarks)
+
+        finger_states = self.get_finger_states(landmarks) or {}
+
         angles = self.get_joint_angles(landmarks)
-        idx_angle = angles.get('idx', 0)
-        mid_angle = angles.get('mid', 0)
+        idx_angle   = angles.get('idx', 0)
+        mid_angle   = angles.get('mid', 0)
+        ring_angle  = angles.get('ring', 0)
+        pinky_angle = angles.get('pinky', 0)
+        thumb_angle = angles.get('thumb', 0)
+
+        # ✅ الأصابع "down/curled" بالزوايا (أكثر ثباتًا من finger_states)
+        FINGER_CURLED_MAX = 120  # جرّب 110-130 حسب تجربتك
+        ring_down  = ring_angle  <= FINGER_CURLED_MAX
+        pinky_down = pinky_angle <= FINGER_CURLED_MAX
+
+        # thumb خله اختياري بالبداية عشان ما يطفي الجيستشر بالغلط
+        thumb_down = thumb_angle <= FINGER_CURLED_MAX
 
         is_bracket_angle = config.BRACKET_ANGLE_MIN <= bracket_angle <= config.BRACKET_ANGLE_MAX
         is_index_straight = idx_angle >= config.FINGER_STRAIGHT_MIN
         is_middle_straight = mid_angle >= config.FINGER_STRAIGHT_MIN
 
-        index_base, index_tip = landmarks[5], landmarks[7]
-        middle_base, middle_tip = landmarks[10], landmarks[12]
+        index_base, index_tip = landmarks[5], landmarks[8]
+        middle_base, middle_tip = landmarks[9], landmarks[12]        
         index_vec_x = index_tip[0] - index_base[0]
         index_vec_y = index_tip[1] - index_base[1]
         middle_vec_x = middle_tip[0] - middle_base[0]
@@ -140,14 +194,15 @@ class HandAnalyzer:
         abs_tilt = abs(tilt_angle_deg)
         if abs_tilt > 90:
             abs_tilt = 180 - abs_tilt
-        HORIZONTAL_THRESHOLD = 30
+        HORIZONTAL_THRESHOLD = 15
         is_horizontal = abs_tilt <= HORIZONTAL_THRESHOLD
 
+        DIRECTION_MARGIN = 8  # بيكسلات
         if handedness == "Left":
-            correct_bracket = avg_vec_x < 30
+            correct_bracket = avg_vec_x < -DIRECTION_MARGIN
             expected_direction = "LEFT"
         elif handedness == "Right":
-            correct_bracket = avg_vec_x > -30
+            correct_bracket = avg_vec_x > DIRECTION_MARGIN
             expected_direction = "RIGHT"
         else:
             correct_bracket = False
@@ -158,7 +213,10 @@ class HandAnalyzer:
             is_index_straight and
             is_middle_straight and
             is_horizontal and
-            correct_bracket
+            correct_bracket and
+            ring_down and
+            pinky_down
+            # thumb_down  # ✅ خله معطّل مؤقتًا
         )
 
         if not is_bracket_angle:
