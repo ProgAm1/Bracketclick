@@ -1,0 +1,23 @@
+﻿# Python
+venv/
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+
+# Model
+hand_landmarker.task
+models/
+
+# logs and captures
+logs/
+captures/
+web/logs/
+web/captures/
+
+# editor
+.cursor/
+
+# environment
+.env

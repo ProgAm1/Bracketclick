@@ -1,0 +1,320 @@
+/* web/static/css/style.css */
+/* BracketClick Photo Booth - GDG AI Committee Project 01 */
+
+/* ==================== Reset & Base ==================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, #4285F4 0%, #34A853 50%, #FBBC05 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    color: #333;
+}
+
+/* ==================== Main Container ==================== */
+.container {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 900px;
+    width: 100%;
+    text-align: center;
+}
+
+/* ==================== Header ==================== */
+header {
+    margin-bottom: 30px;
+}
+
+header h1 {
+    color: #4285F4;
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.subtitle {
+    color: #666;
+    font-size: 1.1em;
+    margin-bottom: 5px;
+}
+
+.instruction {
+    color: #888;
+    font-size: 0.95em;
+    font-style: italic;
+}
+
+/* ==================== Sections ==================== */
+.section {
+    margin: 20px 0;
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.form-card {
+    background: #fff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    border: 2px solid #e0e0e0;
+}
+
+.form-card h2 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 1.5em;
+}
+
+.form-card p {
+    color: #666;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.gesture-instruction {
+    font-size: 1.1em !important;
+    color: #4285F4 !important;
+    font-weight: 600;
+}
+
+.hint {
+    font-size: 0.85em !important;
+    color: #999 !important;
+    margin-top: 15px !important;
+}
+
+/* ==================== Email Input ==================== */
+input[type="email"] {
+    padding: 15px 20px;
+    font-size: 18px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 350px;
+    margin-bottom: 15px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+input[type="email"]:focus {
+    outline: none;
+    border-color: #4285F4;
+    box-shadow: 0 0 10px rgba(66, 133, 244, 0.3);
+}
+
+input[type="email"]::placeholder {
+    color: #aaa;
+}
+
+/* ==================== Buttons ==================== */
+button {
+    padding: 15px 40px;
+    font-size: 18px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #4285F4, #3367D6);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 15px rgba(66, 133, 244, 0.4);
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(66, 133, 244, 0.5);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+/* ==================== Video Container ==================== */
+.video-container {
+    position: relative;
+    display: inline-block;
+    margin: 20px 0;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+#video-feed {
+    display: block;
+    max-width: 100%;
+    width: 800px;
+    border: 5px solid #4285F4;
+    border-radius: 15px;
+    background: #000;
+}
+
+/* ==================== Overlays ==================== */
+/* Countdown and cooldown are drawn in the video frame by the backend (OpenCV).
+   Frontend overlay divs are hidden to avoid duplicate/ghost rendering. */
+#countdown-overlay,
+#cooldown-overlay {
+    display: none !important;
+}
+
+.overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 150px;
+    font-weight: bold;
+    color: #FFD700;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+    display: none;
+    pointer-events: none;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.1); }
+}
+
+.overlay.cooldown {
+    font-size: 60px;
+    color: #EA4335;
+    animation: none;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px 40px;
+    border-radius: 15px;
+}
+
+/* ==================== Gesture Indicators ==================== */
+.gesture-indicators {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.hand-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    background: rgba(234, 67, 53, 0.2);
+    border: 2px solid #EA4335;
+    transition: all 0.3s;
+}
+
+.hand-status.ready {
+    background: rgba(52, 168, 83, 0.2);
+    border-color: #34A853;
+}
+
+.hand-icon {
+    font-size: 1.5em;
+}
+
+.hand-label {
+    font-weight: 600;
+    color: #333;
+}
+
+.hand-check {
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.hand-status.ready .hand-check {
+    color: #34A853;
+}
+
+.hand-status:not(.ready) .hand-check {
+    color: #EA4335;
+}
+
+/* ==================== Status Box ==================== */
+.status-box {
+    margin-top: 20px;
+    padding: 15px 30px;
+    background: linear-gradient(135deg, #4285F4, #34A853);
+    color: white;
+    border-radius: 10px;
+    font-size: 1.1em;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(66, 133, 244, 0.3);
+}
+
+/* ==================== Success Section ==================== */
+.form-card.success {
+    border-color: #34A853;
+    background: linear-gradient(135deg, #fff, #f0fff0);
+}
+
+.success-icon {
+    font-size: 4em;
+    margin-bottom: 20px;
+    animation: bounce 0.6s ease-out;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+.email-confirm {
+    color: #4285F4;
+    font-weight: 600;
+    margin: 20px 0 !important;
+}
+
+/* ==================== Footer ==================== */
+footer {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+    color: #999;
+    font-size: 0.85em;
+}
+
+/* ==================== Responsive Design ==================== */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px;
+    }
+    
+    header h1 {
+        font-size: 1.8em;
+    }
+    
+    .form-card {
+        padding: 20px;
+    }
+    
+    input[type="email"] {
+        width: 100%;
+    }
+    
+    #video-feed {
+        width: 100%;
+    }
+    
+    .overlay {
+        font-size: 100px;
+    }
+    
+    .gesture-indicators {
+        flex-direction: column;
+        gap: 10px;
+    }
+}

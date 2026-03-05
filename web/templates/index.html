@@ -1,0 +1,91 @@
+<!-- web/templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BracketClick Photo Booth - GDG AI Committee</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>📸 BracketClick Photo Booth</h1>
+            <p class="subtitle">GDG AI Committee - Project 01</p>
+            <p class="instruction">Capture the moment, one bracket at a time</p>
+        </header>
+        
+        <!-- Section 1: Email Input -->
+        <div id="email-section" class="section">
+            <div class="form-card">
+                <h2>Step 1: Enter Your Email</h2>
+                <p>We'll send your photo to this address</p>
+                <input type="email" id="email-input" placeholder="your.email@example.com" required>
+                <button onclick="submitEmail()">Start Photo Booth</button>
+                <p class="hint">💡 Your email will be saved with your photo</p>
+            </div>
+        </div>
+        
+        <!-- Section 2: Camera & Gesture -->
+        <div id="camera-section" class="section" style="display:none;">
+            <div class="form-card">
+                <h2>Step 2: Form the Bracket Gesture</h2>
+                <p class="gesture-instruction">
+                    Show <strong>&lt;</strong> with LEFT hand & <strong>&gt;</strong> with RIGHT hand
+                </p>
+                
+                <!-- Live Video Feed -->
+                <div class="video-container">
+                    <img id="video-feed" src="{{ url_for('video_feed') }}" alt="Live Camera Feed">
+                    
+                    <!-- Countdown Overlay -->
+                    <div id="countdown-overlay" class="overlay">3</div>
+                    
+                    <!-- Cooldown Overlay -->
+                    <div id="cooldown-overlay" class="overlay cooldown">
+                        <span id="cooldown-text">Wait...</span>
+                    </div>
+                    
+                    <!-- Gesture Status Indicators -->
+                    <div class="gesture-indicators">
+                        <div id="left-hand-status" class="hand-status">
+                            <span class="hand-icon">✋</span>
+                            <span class="hand-label">Left</span>
+                            <span class="hand-check">✗</span>
+                        </div>
+                        <div id="right-hand-status" class="hand-status">
+                            <span class="hand-icon">✋</span>
+                            <span class="hand-label">Right</span>
+                            <span class="hand-check">✗</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Status Message -->
+                <div id="status-message" class="status-box">
+                    <span id="status-text">Form <> with BOTH hands to capture!</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section 3: Success -->
+        <div id="success-section" class="section" style="display:none;">
+            <div class="form-card success">
+                <div class="success-icon">✅</div>
+                <h2>Photo Captured!</h2>
+                <p>Your photo has been saved successfully</p>
+                <p class="email-confirm">Email: <span id="confirmed-email"></span></p>
+                <button onclick="resetBooth()">Take Another Photo</button>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <footer>
+            <p>BracketClick v1.0 | GDG AI Committee - Project 01</p>
+        </footer>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
