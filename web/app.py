@@ -11,6 +11,7 @@ from src.gesture_engine import HandAnalyzer
 from src import config
 from src.email_service import send_photo_email
 
+import webbrowser
 import cv2
 import numpy as np
 import json
@@ -39,7 +40,8 @@ def ensure_model():
 
     return model_path
 
-
+def open_browser():
+    webbrowser.open("http://127.0.0.1:5000")
 
 
 def is_valid_email(email):
@@ -529,4 +531,6 @@ if __name__ == '__main__':
         print("    Check if hand_landmarker.task exists\n")
     
     print("\nStarting server...\n")
+    # Open browser automatically
+    threading.Timer(1.5, open_browser).start()
     app.run(debug=False, host='0.0.0.0', port=5000, threaded=True)

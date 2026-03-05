@@ -109,8 +109,7 @@ input[type="email"] {
     transition: border-color 0.3s, box-shadow 0.3s;
 
     /* ✅ FIX */
-    background: #3a3a3a;
-    color: #fff;
+    color: #000000;
 }
 
 input[type="email"]:focus {
